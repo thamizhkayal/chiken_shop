@@ -1,7 +1,13 @@
 .env
+.env.*
+!.env.example
+!.env.production.example
 .venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .coverage
 htmlcov/
+node_modules/
+frontend/playwright-report/
+frontend/test-results/

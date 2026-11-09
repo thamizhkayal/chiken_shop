@@ -96,6 +96,10 @@ docker compose up --build
 
 The backend container applies Alembic migrations before starting. The sample `.env` values are for local development only and must not be used in a deployed environment.
 
+## Production deployment
+
+See [docs/deployment.md](docs/deployment.md) for the single-host production setup with Caddy HTTPS termination, internal-only PostgreSQL/Redis/API services, secure cookies, Redis-backed rate limits, secret requirements, backup/rollback guidance, and the production Compose command. Copy `.env.production.example` to `.env.production`, replace every placeholder, and never commit the resulting file. Production startup rejects insecure cookies, shared JWT/QR secrets, memory-only rate limiting, example secrets, wildcard CORS, or extra development spins.
+
 To create the first administrator or staff account after the API database is up, open a shell in the backend container and run:
 
 ```bash
@@ -119,8 +123,11 @@ cd frontend
 npm ci
 npm run lint
 npm run build
+npm run test:e2e
 ```
+
+The Playwright browser tests need Chromium installed and a running local Compose stack. CI installs Chromium and runs them against the built app.
 
 ## Current increment
 
-Phase 1 foundation includes the customer landing/auth experience, customer registration/login/logout, access and rotating refresh tokens, role checks, PostgreSQL/Alembic setup, Compose, and auth tests. Phase 2 adds per-customer wallets, the append-only integer transaction ledger, balance reconciliation and locking, a once-per-business-day login reward, the wallet read APIs, and wallet/auth tests. Phase 3 adds configurable daily spins and puzzles, a shared configurable activity cap, customer activity pages, admin activity settings, audit records, and backend tests. Phase 4 adds atomic point reservations, expiring QR credentials, customer cancellation/refunds and redemption history, plus authenticated staff QR scanning, verification, audited fulfillment, and an unused-points refund. Phase 5 is in progress: this increment adds customer, admin, and staff dashboard views plus full customer wallet history; customer/staff administration, reports, audit-log browsing, and suspicious-activity reporting remain future work.
+Phase 1 foundation includes the customer landing/auth experience, customer registration/login/logout, access and rotating refresh tokens, role checks, PostgreSQL/Alembic setup, Compose, and auth tests. Phase 2 adds per-customer wallets, the append-only integer transaction ledger, balance reconciliation and locking, a once-per-business-day login reward, the wallet read APIs, and wallet/auth tests. Phase 3 adds configurable daily spins and puzzles, a shared configurable activity cap, customer activity pages, admin activity settings, audit records, and backend tests. Phase 4 adds atomic point reservations, expiring QR credentials, customer cancellation/refunds and redemption history, plus authenticated staff QR scanning, verification, audited fulfillment, and an unused-points refund. Phase 5 adds customer/admin/staff dashboard views and full customer wallet history; customer/staff administration, report browsing, and suspicious-activity reporting remain future work. Phase 6 adds production security configuration and Compose overlay, HTTPS routing, CI, backend security/configuration tests, and Playwright browser flows for registration, wallet history, and daily spin. Production deployment still requires host-level monitoring, backup execution, secret management, and operational review.

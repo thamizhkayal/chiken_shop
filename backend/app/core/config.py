@@ -1,6 +1,6 @@
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import SecretStr, field_validator
+from pydantic import SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -59,6 +59,28 @@ class Settings(BaseSettings):
         if not 1 <= value <= 100:
             raise ValueError("DEVELOPMENT_SPIN_LIMIT must be between 1 and 100")
         return value
+
+    @model_validator(mode="after")
+    def validate_production_security(self) -> "Settings":
+        if self.environment.lower() != "production":
+            return self
+        if not self.cookie_secure:
+            raise ValueError("COOKIE_SECURE must be true in production")
+        if self.redemption_qr_secret_key is None:
+            raise ValueError("REDEMPTION_QR_SECRET_KEY must be set in production")
+        if self.redemption_qr_secret_key == self.jwt_secret_key:
+            raise ValueError("REDEMPTION_QR_SECRET_KEY must be separate from JWT_SECRET_KEY")
+        for secret in (self.jwt_secret_key, self.redemption_qr_secret_key):
+            normalized_secret = secret.get_secret_value().lower().replace("_", "-")
+            if any(marker in normalized_secret for marker in ("change-me", "replace-me", "local-development")):
+                raise ValueError("Production secrets must not contain example placeholder values")
+        if not self.rate_limit_storage_uri.startswith(("redis://", "rediss://")):
+            raise ValueError("RATE_LIMIT_STORAGE_URI must use Redis in production")
+        if self.development_spin_limit != 1:
+            raise ValueError("DEVELOPMENT_SPIN_LIMIT must be 1 in production")
+        if not self.cors_origins or "*" in self.cors_origins:
+            raise ValueError("CORS_ORIGINS_RAW must contain explicit production origins")
+        return self
 
     @property
     def cors_origins(self) -> list[str]:

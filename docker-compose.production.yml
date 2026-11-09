@@ -1,0 +1,60 @@
+services:
+  db:
+    ports: !override []
+
+  backend:
+    environment:
+      ENVIRONMENT: production
+      DEVELOPMENT_SPIN_LIMIT: 1
+      REDEMPTION_QR_SECRET_KEY: ${REDEMPTION_QR_SECRET_KEY:?Set REDEMPTION_QR_SECRET_KEY}
+      COOKIE_SECURE: "true"
+      CORS_ORIGINS_RAW: https://${DOMAIN:?Set DOMAIN}
+      RATE_LIMIT_STORAGE_URI: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports: !override []
+
+  frontend:
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?Set NEXT_PUBLIC_API_URL}
+    ports: !override []
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - redis_data:/data
+
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN}
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  redis_data:
+  caddy_data:
+  caddy_config:
