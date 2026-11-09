@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     refresh_token_days: int = 7
     business_timezone: str = "Asia/Kolkata"
     redemption_qr_ttl_minutes: int = 15
+    development_spin_limit: int = 1
     cookie_secure: bool = False
     cookie_domain: str | None = None
     cors_origins_raw: str = "http://localhost:3000"
@@ -50,6 +51,13 @@ class Settings(BaseSettings):
     def validate_redemption_qr_ttl(cls, value: int) -> int:
         if not 5 <= value <= 60:
             raise ValueError("REDEMPTION_QR_TTL_MINUTES must be between 5 and 60")
+        return value
+
+    @field_validator("development_spin_limit")
+    @classmethod
+    def validate_development_spin_limit(cls, value: int) -> int:
+        if not 1 <= value <= 100:
+            raise ValueError("DEVELOPMENT_SPIN_LIMIT must be between 1 and 100")
         return value
 
     @property

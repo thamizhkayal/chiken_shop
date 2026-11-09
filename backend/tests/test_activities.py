@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app.models.activities import AdminAuditLog, PuzzleQuestion, SpinConfiguration, SpinRewardOption
+from app.models.activities import AdminAuditLog, PuzzleQuestion, SpinConfiguration, SpinRewardOption, SpinSession
 from app.models.identity import Role, User
 from app.models.wallet import Wallet, WalletTransaction, WalletTransactionType
 from app.core.security import hash_password
@@ -39,6 +39,7 @@ def create_configuration(db_session, *, cap: int = 20):
 
 
 def test_spin_is_server_awarded_once_and_writes_ledger(db_session, monkeypatch):
+    monkeypatch.setattr("app.services.activity_service.settings.environment", "production")
     user = create_customer(db_session)
     configuration = create_configuration(db_session)
     for existing_reward in configuration.rewards:
@@ -61,6 +62,43 @@ def test_spin_is_server_awarded_once_and_writes_ledger(db_session, monkeypatch):
     ).one()
     assert transaction.points_delta == 5
     assert db_session.query(Wallet).filter_by(user_id=user.id).one().balance_points == 5
+    with pytest.raises(ActivityError, match="already used"):
+        spin(db_session, user.id, now=now)
+
+
+def test_development_spin_limit_allows_manual_repeated_spins(db_session, monkeypatch):
+    monkeypatch.setattr("app.services.activity_service.settings.environment", "development")
+    monkeypatch.setattr("app.services.activity_service.settings.development_spin_limit", 2)
+    user = create_customer(db_session)
+    create_configuration(db_session, cap=20)
+    now = datetime(2026, 11, 7, 12, 0, tzinfo=timezone.utc)
+
+    first = spin(db_session, user.id, now=now)
+    second = spin(db_session, user.id, now=now)
+
+    assert first.spins_used == 1
+    assert first.spins_remaining == 1
+    assert not first.spun_today
+    assert second.spins_used == 2
+    assert second.spins_remaining == 0
+    assert second.spun_today
+    assert get_spin_status(db_session, user.id, now=now).spin_limit == 2
+    assert db_session.query(SpinSession).filter_by(user_id=user.id).count() == 2
+    with pytest.raises(ActivityError, match="already used"):
+        spin(db_session, user.id, now=now)
+
+
+def test_development_spin_limit_does_not_change_production_limit(db_session, monkeypatch):
+    monkeypatch.setattr("app.services.activity_service.settings.environment", "production")
+    monkeypatch.setattr("app.services.activity_service.settings.development_spin_limit", 10)
+    user = create_customer(db_session)
+    create_configuration(db_session)
+    now = datetime(2026, 11, 7, 12, 0, tzinfo=timezone.utc)
+
+    outcome = spin(db_session, user.id, now=now)
+
+    assert outcome.spin_limit == 1
+    assert outcome.spins_remaining == 0
     with pytest.raises(ActivityError, match="already used"):
         spin(db_session, user.id, now=now)
 

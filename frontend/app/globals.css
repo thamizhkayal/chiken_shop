@@ -216,12 +216,13 @@ h1 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(66px, 7.5v
 .activity-card { background: #fffdf8; border: 1px solid #eeeadf; border-radius: 18px; box-shadow: 0 18px 55px rgba(48, 47, 36, .06); margin: 42px auto; max-width: 560px; padding: 38px; text-align: center; }
 .activity-title { font-size: clamp(42px, 8vw, 58px); letter-spacing: -2px; margin: 14px 0; }
 .activity-description { color: var(--muted); font-size: 13px; line-height: 1.7; margin: 0 auto; max-width: 390px; }
-.reward-wheel { align-items: center; background: conic-gradient(#e9683c 0 25%, #f2c65d 25% 50%, #49634d 50% 75%, #e7a97d 75% 100%); border: 9px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px #e6e1d5, 0 12px 30px rgba(52, 48, 36, .12); display: flex; height: 230px; justify-content: center; margin: 28px auto 22px; position: relative; width: 230px; }
-.reward-wheel::before { border-left: 13px solid transparent; border-right: 13px solid transparent; border-top: 21px solid var(--ink); content: ""; left: calc(50% - 13px); position: absolute; top: -12px; z-index: 1; }
+.reward-wheel-frame { height: 230px; margin: 28px auto 22px; position: relative; width: 230px; }
+.reward-wheel { align-items: center; background: conic-gradient(#e9683c 0 25%, #f2c65d 25% 50%, #49634d 50% 75%, #e7a97d 75% 100%); border: 9px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px #e6e1d5, 0 12px 30px rgba(52, 48, 36, .12); display: flex; height: 100%; justify-content: center; position: relative; width: 100%; }
+.reward-wheel-pointer { border-left: 13px solid transparent; border-right: 13px solid transparent; border-top: 21px solid var(--ink); left: 50%; position: absolute; top: -10px; transform: translateX(-50%); z-index: 2; }
+.reward-wheel-label { color: #fffdf8; font-size: 11px; font-weight: 800; left: 50%; position: absolute; text-shadow: 0 1px 3px rgba(0,0,0,.5); top: 50%; white-space: nowrap; }
 .reward-wheel-labels { color: #fffdf8; display: grid; font-size: 10px; font-weight: 800; gap: 66px 64px; grid-template-columns: 1fr 1fr; text-shadow: 0 1px 3px rgba(0,0,0,.4); }
 .reward-wheel-center { align-items: center; background: var(--paper); border: 4px solid white; border-radius: 50%; color: var(--orange); display: flex; font-family: Georgia, serif; font-size: 21px; height: 48px; justify-content: center; position: absolute; width: 48px; }
-.reward-wheel-spinning { animation: reward-spin 3.2s cubic-bezier(.12,.75,.22,1) both; }
-@keyframes reward-spin { from { transform: rotate(0); } to { transform: rotate(var(--wheel-target-rotation, 1980deg)); } }
+.reward-wheel-spinning { transition: transform 3.2s cubic-bezier(.12,.75,.22,1); }
 .activity-message, .activity-cap, .activity-policy { color: var(--muted); font-size: 11px; line-height: 1.7; }
 .activity-result { background: #edf2e8; border-radius: 10px; color: var(--green); font-size: 14px; font-weight: 750; margin: 20px 0; padding: 14px; }
 .activity-error { color: #a53d2b; font-size: 12px; margin: 17px 0; }
@@ -303,7 +304,7 @@ h1 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(66px, 7.5v
   .wallet-transaction { align-items: start; }
   .activity-card { margin: 20px 16px; padding: 27px 21px; }
   .activity-links { grid-template-columns: 1fr; }
-  .reward-wheel { height: 205px; width: 205px; }
+  .reward-wheel-frame { height: 205px; width: 205px; }
   .reward-wheel-labels { gap: 57px 53px; }
   .admin-reward-row { grid-template-columns: 1fr 1fr; }
   .admin-remove { grid-column: 2; justify-self: end; }

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_roles
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.rate_limit import limiter
 from app.models.identity import User
@@ -33,6 +34,9 @@ def get_spin_status(
     return SpinStatusResponse(
         enabled=result.enabled,
         spun_today=result.spun_today,
+        spins_used=result.spins_used,
+        spin_limit=result.spin_limit,
+        spins_remaining=result.spins_remaining,
         daily_points_earned=result.daily_points_earned,
         daily_points_remaining=result.daily_points_remaining,
         rewards=[
@@ -43,7 +47,7 @@ def get_spin_status(
 
 
 @router.post("/spin", response_model=SpinRewardResponse)
-@limiter.limit("3/minute")
+@limiter.limit("30/minute" if settings.environment.lower() == "development" else "3/minute")
 def spin(
     request: Request,
     user: User = Depends(require_roles("customer")),
@@ -56,6 +60,9 @@ def spin(
         raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
     return SpinRewardResponse(
         spun_today=result.spun_today,
+        spins_used=result.spins_used,
+        spin_limit=result.spin_limit,
+        spins_remaining=result.spins_remaining,
         points_awarded=result.points_awarded,
         reward_points=result.reward_points,
         reward_index=result.reward_index,

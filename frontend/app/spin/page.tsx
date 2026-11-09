@@ -7,6 +7,9 @@ import type { CSSProperties } from "react";
 type SpinStatus = {
   enabled: boolean;
   spun_today: boolean;
+  spins_used: number;
+  spin_limit: number;
+  spins_remaining: number;
   daily_points_earned: number;
   daily_points_remaining: number;
   rewards: { points: number; probability_basis_points: number }[];
@@ -28,27 +31,23 @@ export default function SpinPage() {
   const [result, setResult] = useState<SpinResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
+  const [wheelRotation, setWheelRotation] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const wheelStops: string[] = [];
+  const wheelLabels: { points: number; angle: number }[] = [];
   let probabilityOffset = 0;
   status?.rewards.forEach((reward, index) => {
     const start = probabilityOffset / 100;
+    const midpoint = probabilityOffset + reward.probability_basis_points / 2;
     probabilityOffset += reward.probability_basis_points;
     wheelStops.push(`${wheelColors[index % wheelColors.length]} ${start}% ${probabilityOffset / 100}%`);
+    wheelLabels.push({ points: reward.points, angle: midpoint / 10_000 * 360 });
   });
-  const targetReward = result && status?.rewards[result.reward_index];
-  const midpointBasisPoints = targetReward
-    ? status!.rewards.slice(0, result!.reward_index).reduce((sum, item) => sum + item.probability_basis_points, 0)
-      + targetReward.probability_basis_points / 2
-    : 0;
-  const targetRotation = result
-    ? `${1980 + ((360 - midpointBasisPoints / 10_000 * 360 + 360) % 360)}deg`
-    : "1980deg";
   const wheelStyle = {
     background: wheelStops.length > 0 ? `conic-gradient(${wheelStops.join(", ")})` : undefined,
-    "--wheel-target-rotation": targetRotation,
-  } as CSSProperties & { "--wheel-target-rotation": string };
+    transform: `rotate(${wheelRotation}deg)`,
+  } as CSSProperties;
   const loadStatus = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/spin/status`, { credentials: "include" });
@@ -74,8 +73,22 @@ export default function SpinPage() {
       const response = await fetch(`${API_URL}/spin`, { method: "POST", credentials: "include" });
       const data = await response.json() as SpinResult & { detail?: string };
       if (!response.ok) throw new Error(data.detail ?? "Your spin could not be completed.");
+      const selectedIndex = data.reward_index;
+      const rewards = status?.rewards;
+      const selectedReward = rewards?.[selectedIndex];
+      if (!rewards || !selectedReward) throw new Error("The selected reward is unavailable. Refresh the page and try again.");
+      const midpointBasisPoints = rewards
+        .slice(0, selectedIndex)
+        .reduce((sum, reward) => sum + reward.probability_basis_points, 0)
+        + selectedReward.probability_basis_points / 2;
+      const midpointDegrees = midpointBasisPoints / 10_000 * 360;
+      const targetOffset = (360 - midpointDegrees + 360) % 360;
+      const minimumRotation = wheelRotation + 5 * 360;
+      const targetRotation = targetOffset
+        + Math.ceil((minimumRotation - targetOffset) / 360) * 360;
       setResult(data);
       setSpinning(true);
+      setWheelRotation(targetRotation);
       await loadStatus();
     } catch (spinError) {
       setError(spinError instanceof Error ? spinError.message : "Your spin could not be completed.");
@@ -93,16 +106,37 @@ export default function SpinPage() {
       <section className="activity-card">
         <p className="section-kicker">A LITTLE DAILY EXTRA</p>
         <h1 className="activity-title">Daily spin</h1>
-        <p className="activity-description">One free spin each day. Spin and puzzle rewards share a daily points cap; daily login points are separate.</p>
+        <p className="activity-description">
+          {status?.spin_limit && status.spin_limit > 1
+            ? `Development mode: up to ${status.spin_limit} spins per day for manual testing. The normal daily points cap still applies.`
+            : "One free spin each day. Spin and puzzle rewards share a daily points cap; daily login points are separate."}
+        </p>
         {loading ? <p className="activity-message" role="status">Loading your spin…</p> : error && !result ? <p className="activity-error" role="alert">{error}</p> : null}
-        <div
-          aria-label={spinning ? "Spinning for your server-selected reward" : "Daily reward wheel"}
-          className={`reward-wheel${spinning ? " reward-wheel-spinning" : ""}`}
-          onAnimationEnd={() => setSpinning(false)}
-          role="img"
-          style={wheelStyle}
-        >
-          <span className="reward-wheel-center">C</span>
+        <div className="reward-wheel-frame">
+          <span aria-hidden="true" className="reward-wheel-pointer" />
+          <div
+            aria-label={spinning ? "Spinning for your server-selected reward" : "Daily reward wheel"}
+            className={`reward-wheel${spinning ? " reward-wheel-spinning" : ""}`}
+            onTransitionEnd={(event) => {
+              if (event.target === event.currentTarget && event.propertyName === "transform") {
+                setSpinning(false);
+              }
+            }}
+            role="img"
+            style={wheelStyle}
+          >
+            {wheelLabels.map((label, index) => (
+              <span
+                aria-hidden="true"
+                className="reward-wheel-label"
+                key={`${label.points}-${index}`}
+                style={{ transform: `translate(-50%, -50%) rotate(${label.angle}deg) translateY(-76px) rotate(-${label.angle}deg)` }}
+              >
+                {label.points}
+              </span>
+            ))}
+            <span className="reward-wheel-center">C</span>
+          </div>
         </div>
         {result && !spinning && (
           <p className="activity-result" role="status">
@@ -117,11 +151,19 @@ export default function SpinPage() {
         <p className="activity-cap">Today: {format.format(status?.daily_points_earned ?? 0)} earned · {format.format(status?.daily_points_remaining ?? 0)} remaining</p>
         <button
           className="button button-dark activity-button"
-          disabled={loading || submitting || spinning || !status?.enabled || status?.spun_today}
+          disabled={loading || submitting || spinning || !status?.enabled || status?.spins_remaining === 0}
           onClick={() => void spin()}
           type="button"
         >
-          {submitting ? "Getting your result…" : status?.spun_today ? "Come back tomorrow" : status?.enabled ? "Spin once today" : "Spin is unavailable"}
+          {submitting
+            ? "Getting your result…"
+            : status?.spins_remaining === 0
+              ? "Come back tomorrow"
+              : status?.enabled
+                ? status && status.spin_limit > 1
+                  ? `Spin again · ${status.spins_remaining} left`
+                  : "Spin once today"
+                : "Spin is unavailable"}
         </button>
         {error && !result && <button className="activity-retry" onClick={() => { setError(""); setLoading(true); void loadStatus(); }} type="button">Try again</button>}
         <p className="activity-policy">Your reward is selected by the server before the wheel moves. Published reward odds are shown below.</p>

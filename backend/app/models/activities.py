@@ -7,6 +7,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     JSON,
     String,
@@ -64,9 +65,9 @@ class SpinRewardOption(Base):
 class SpinSession(Base):
     __tablename__ = "spin_sessions"
     __table_args__ = (
-        UniqueConstraint("user_id", "business_date", name="uq_spin_sessions_user_business_date"),
         CheckConstraint("reward_points >= 0", name="ck_spin_sessions_reward_non_negative"),
         CheckConstraint("probability_basis_points > 0", name="ck_spin_sessions_probability_positive"),
+        Index("ix_spin_sessions_user_business_date", "user_id", "business_date"),
     )
 
     id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)

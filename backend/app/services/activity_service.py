@@ -35,6 +35,9 @@ class ActivityError(Exception):
 class ActivityStatus:
     enabled: bool
     spun_today: bool
+    spins_used: int
+    spin_limit: int
+    spins_remaining: int
     daily_points_earned: int
     daily_points_remaining: int
     rewards: list[tuple[int, int]]
@@ -43,6 +46,9 @@ class ActivityStatus:
 @dataclass(frozen=True)
 class SpinResult:
     spun_today: bool
+    spins_used: int
+    spin_limit: int
+    spins_remaining: int
     points_awarded: int
     reward_points: int
     reward_index: int
@@ -107,20 +113,31 @@ def _remaining(configuration: SpinConfiguration, daily_limit: DailyActivityLimit
     return max(0, configuration.daily_activity_cap - daily_limit.points_earned)
 
 
+def _spin_limit() -> int:
+    if settings.environment.lower() == "development":
+        return settings.development_spin_limit
+    return 1
+
+
 def get_spin_status(db: Session, user_id: UUID, *, now: datetime | None = None) -> ActivityStatus:
     business_day = current_business_date(now)
     configuration = _configuration(db)
     limit = db.get(DailyActivityLimit, (user_id, business_day))
     earned = limit.points_earned if limit is not None else 0
-    spun = db.scalar(
-        select(SpinSession.id).where(
+    spins_used = db.scalar(
+        select(func.count()).select_from(SpinSession).where(
             SpinSession.user_id == user_id,
             SpinSession.business_date == business_day,
         )
-    ) is not None
+    ) or 0
+    spin_limit = _spin_limit()
+    spins_remaining = max(0, spin_limit - spins_used)
     return ActivityStatus(
         enabled=configuration.enabled,
-        spun_today=spun,
+        spun_today=spins_remaining == 0,
+        spins_used=spins_used,
+        spin_limit=spin_limit,
+        spins_remaining=spins_remaining,
         daily_points_earned=earned,
         daily_points_remaining=max(0, configuration.daily_activity_cap - earned),
         rewards=[
@@ -137,14 +154,15 @@ def spin(db: Session, user_id: UUID, *, now: datetime | None = None) -> SpinResu
         configuration = _configuration(db, lock=True)
         if not configuration.enabled:
             raise ActivityError(409, "Daily spin is currently disabled")
-        existing = db.scalar(
-            select(SpinSession.id).where(
+        spins_used = db.scalar(
+            select(func.count()).select_from(SpinSession).where(
                 SpinSession.user_id == user_id,
                 SpinSession.business_date == business_day,
             )
-        )
-        if existing is not None:
-            raise ActivityError(409, "You have already used today's spin")
+        ) or 0
+        spin_limit = _spin_limit()
+        if spins_used >= spin_limit:
+            raise ActivityError(409, "You have already used all of today's spins")
         if not configuration.rewards:
             raise ActivityError(503, "No spin rewards are configured")
 
@@ -179,18 +197,23 @@ def spin(db: Session, user_id: UUID, *, now: datetime | None = None) -> SpinResu
         _credit_activity(db, wallet, user_id, awarded, WalletTransactionType.SPIN_REWARD, "Daily spin reward")
         daily_limit.points_earned += awarded
         db.commit()
+        spins_used += 1
+        spins_remaining = max(0, spin_limit - spins_used)
         return SpinResult(
-            True,
-            awarded,
-            selected.points,
-            selected_index,
-            business_day,
-            daily_limit.points_earned,
-            _remaining(configuration, daily_limit),
+            spun_today=spins_remaining == 0,
+            spins_used=spins_used,
+            spin_limit=spin_limit,
+            spins_remaining=spins_remaining,
+            points_awarded=awarded,
+            reward_points=selected.points,
+            reward_index=selected_index,
+            business_date=business_day,
+            daily_points_earned=daily_limit.points_earned,
+            daily_points_remaining=_remaining(configuration, daily_limit),
         )
     except IntegrityError as exc:
         db.rollback()
-        raise ActivityError(409, "You have already used today's spin") from exc
+        raise ActivityError(409, "Spin could not be recorded; please refresh and try again") from exc
     except ActivityError:
         db.rollback()
         raise

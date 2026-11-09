@@ -8,6 +8,9 @@ from pydantic import BaseModel, Field, model_validator
 
 class SpinRewardResponse(BaseModel):
     spun_today: bool
+    spins_used: int
+    spin_limit: int
+    spins_remaining: int
     points_awarded: int
     reward_points: int
     reward_index: int
@@ -19,6 +22,9 @@ class SpinRewardResponse(BaseModel):
 class SpinStatusResponse(BaseModel):
     enabled: bool
     spun_today: bool
+    spins_used: int
+    spin_limit: int
+    spins_remaining: int
     daily_points_earned: int
     daily_points_remaining: int
     rewards: list["SpinRewardOptionResponse"]
