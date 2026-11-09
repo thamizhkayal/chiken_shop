@@ -4,6 +4,7 @@ fastapi>=0.116,<1
 PyJWT>=2.10,<3
 psycopg[binary]>=3.2,<4
 pydantic-settings>=2.10,<3
+qrcode>=8.2,<9
 pwdlib[argon2]>=0.2,<1
 slowapi>=0.1.9,<1
 SQLAlchemy>=2.0.42,<3

@@ -178,6 +178,40 @@ h1 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(66px, 7.5v
 .activity-link-card > span:last-child { color: var(--green); font-size: 15px; }
 .activity-link-icon { align-items: center; background: var(--orange); border-radius: 50%; color: white; display: inline-flex; font-size: 22px; height: 37px; justify-content: center; width: 37px; }
 .puzzle-icon { background: var(--green); font-family: Georgia, serif; }
+.redemption-card { max-width: 680px; }
+.redemption-balance { background: var(--green); border-radius: 14px; color: #fffaf0; margin: 24px auto; max-width: 360px; padding: 21px; }
+.redemption-balance > span { color: #d2d7bd; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; }
+.redemption-balance strong { display: block; font-family: Georgia, serif; font-size: 42px; font-weight: 500; margin: 8px 0; }
+.redemption-balance strong small { font-family: Arial, sans-serif; font-size: 13px; }
+.redemption-balance p { color: #d2d7bd; font-size: 11px; margin: 0; }
+.redemption-form { display: grid; gap: 10px; margin: 26px auto; max-width: 380px; text-align: left; }
+.redemption-form label { font-size: 11px; font-weight: 750; }
+.redemption-form input { background: #fff; border: 1px solid #dedacc; border-radius: 9px; color: var(--ink); font: inherit; font-size: 14px; padding: 12px; width: 100%; }
+.redemption-help { color: var(--muted); font-size: 10px; line-height: 1.6; margin: 0; }
+.redemption-form .activity-button { margin: 10px 0 0; width: 100%; }
+.redemption-qr { border: 1px solid #eeeadf; border-radius: 14px; margin: 24px auto; max-width: 340px; padding: 18px; }
+.redemption-qr img { display: block; height: auto; margin: 0 auto 12px; max-width: 220px; width: 100%; }
+.redemption-qr p { color: var(--muted); font-size: 11px; line-height: 1.55; margin: 6px 0; }
+.redemption-history { border-top: 1px solid #eeeadf; margin-top: 34px; padding-top: 24px; text-align: left; }
+.redemption-history h2 { font-family: Georgia, "Times New Roman", serif; font-size: 24px; font-weight: 500; margin: 0 0 14px; }
+.redemption-history ul { list-style: none; margin: 0; padding: 0; }
+.redemption-history li { align-items: center; border-bottom: 1px solid #eeeadf; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; padding: 14px 0; }
+.redemption-history li > div:first-child { display: grid; gap: 5px; }
+.redemption-history li strong { font-size: 12px; }
+.redemption-history li small { color: var(--muted); font-size: 10px; }
+.redemption-status { background: #f0eee5; border-radius: 999px; font-size: 9px; font-weight: 800; letter-spacing: .5px; padding: 6px 9px; }
+.redemption-status-reserved { background: #fff0cb; color: #705114; }
+.redemption-status-fulfilled { background: #e3eddf; color: #2f4939; }
+.redemption-status-expired, .redemption-status-cancelled { color: #77786f; }
+.redemption-actions { display: flex; flex-basis: 100%; gap: 16px; }
+.text-button { background: none; border: 0; color: var(--green); cursor: pointer; font: inherit; font-size: 10px; font-weight: 750; padding: 2px 0; text-decoration: underline; }
+.redemption-camera { background: #20231c; border-radius: 12px; display: block; margin: 18px auto; max-width: 360px; width: 100%; }
+.staff-scan-form { margin-top: 20px; }
+.staff-redemption-details { background: #f0eee5; border-radius: 12px; margin-top: 24px; padding: 18px; text-align: left; }
+.staff-redemption-details > p { align-items: center; display: flex; gap: 14px; justify-content: space-between; margin: 8px 0; }
+.staff-redemption-details > p span { color: var(--muted); font-size: 10px; }
+.staff-redemption-details > p strong { font-size: 11px; text-align: right; }
+.staff-redemption-details .redemption-form { border-top: 1px solid #dedacc; margin-bottom: 0; max-width: none; padding-top: 18px; }
 .activity-page { min-height: 100vh; padding-bottom: 48px; }
 .activity-card { background: #fffdf8; border: 1px solid #eeeadf; border-radius: 18px; box-shadow: 0 18px 55px rgba(48, 47, 36, .06); margin: 42px auto; max-width: 560px; padding: 38px; text-align: center; }
 .activity-title { font-size: clamp(42px, 8vw, 58px); letter-spacing: -2px; margin: 14px 0; }

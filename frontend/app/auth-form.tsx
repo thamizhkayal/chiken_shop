@@ -45,8 +45,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         }
         throw new Error(error?.detail ?? "We couldn’t complete that request. Please try again.");
       }
-      await response.json() as AuthResponse;
-      router.push("/dashboard");
+      const account = await response.json() as AuthResponse;
+      router.push(account.role === "staff" ? "/staff/redemptions" : account.role === "admin" ? "/admin/activities" : "/dashboard");
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
     } finally {

@@ -11,10 +11,12 @@ class Settings(BaseSettings):
     environment: str = "development"
     database_url: str = "postgresql+psycopg://cluck:cluck@db:5432/cluckclub"
     jwt_secret_key: SecretStr
+    redemption_qr_secret_key: SecretStr | None = None
     jwt_algorithm: str = "HS256"
     access_token_minutes: int = 15
     refresh_token_days: int = 7
     business_timezone: str = "Asia/Kolkata"
+    redemption_qr_ttl_minutes: int = 15
     cookie_secure: bool = False
     cookie_domain: str | None = None
     cors_origins_raw: str = "http://localhost:3000"
@@ -27,6 +29,13 @@ class Settings(BaseSettings):
             raise ValueError("JWT_SECRET_KEY must contain at least 32 characters")
         return value
 
+    @field_validator("redemption_qr_secret_key")
+    @classmethod
+    def validate_redemption_qr_secret(cls, value: SecretStr | None) -> SecretStr | None:
+        if value is not None and len(value.get_secret_value()) < 32:
+            raise ValueError("REDEMPTION_QR_SECRET_KEY must contain at least 32 characters")
+        return value
+
     @field_validator("business_timezone")
     @classmethod
     def validate_business_timezone(cls, value: str) -> str:
@@ -34,6 +43,13 @@ class Settings(BaseSettings):
             ZoneInfo(value)
         except ZoneInfoNotFoundError as exc:
             raise ValueError("BUSINESS_TIMEZONE must be a valid IANA timezone") from exc
+        return value
+
+    @field_validator("redemption_qr_ttl_minutes")
+    @classmethod
+    def validate_redemption_qr_ttl(cls, value: int) -> int:
+        if not 5 <= value <= 60:
+            raise ValueError("REDEMPTION_QR_TTL_MINUTES must be between 5 and 60")
         return value
 
     @property

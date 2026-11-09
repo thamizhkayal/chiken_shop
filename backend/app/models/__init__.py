@@ -9,6 +9,7 @@ from app.models.activities import (
     SpinSession,
 )
 from app.models.identity import RefreshSession, Role, StaffProfile, User
+from app.models.redemption import RedemptionQrToken, RedemptionRequest, RedemptionStatus
 from app.models.wallet import Wallet, WalletTransaction, WalletTransactionType
 
 __all__ = [
@@ -18,6 +19,9 @@ __all__ = [
     "PuzzleAttempt",
     "PuzzleQuestion",
     "RefreshSession",
+    "RedemptionQrToken",
+    "RedemptionRequest",
+    "RedemptionStatus",
     "Role",
     "StaffProfile",
     "SpinConfiguration",

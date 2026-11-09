@@ -135,6 +135,11 @@ export default function DashboardPage() {
             <span><strong>Daily puzzle</strong><small>Answer correctly to earn points</small></span>
             <span aria-hidden="true">↗</span>
           </Link>
+          <Link className="activity-link-card" href="/redeem">
+            <span className="activity-link-icon" aria-hidden="true">✓</span>
+            <span><strong>Redeem chicken</strong><small>Use your points at the shop</small></span>
+            <span aria-hidden="true">↗</span>
+          </Link>
         </nav>
         <section className="wallet-activity" aria-labelledby="wallet-activity-title">
           <div className="wallet-activity-heading">
