@@ -140,7 +140,9 @@ export default function StaffRedemptionPage() {
     <main className="activity-page">
       <header className="site-header dashboard-header">
         <Link className="brand" href="/"><span className="brand-mark">C</span><span>cluck club</span></Link>
-        <span className="section-kicker">SHOP STAFF</span>
+        <nav className="operations-nav" aria-label="Staff navigation">
+          <Link className="button button-quiet" href="/staff">Dashboard</Link>
+        </nav>
       </header>
       <section className="activity-card redemption-card">
         <p className="section-kicker">SINGLE-USE CODE CHECK</p>

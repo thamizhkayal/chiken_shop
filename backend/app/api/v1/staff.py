@@ -5,6 +5,7 @@ from app.api.deps import require_roles
 from app.core.database import get_db
 from app.core.rate_limit import limiter
 from app.models.identity import User
+from app.schemas.dashboard import StaffDashboardResponse
 from app.schemas.redemption import (
     StaffRedemptionFulfillRequest,
     StaffRedemptionFulfillResponse,
@@ -12,6 +13,7 @@ from app.schemas.redemption import (
     StaffRedemptionVerifyResponse,
 )
 from app.services import redemption_service
+from app.services import dashboard_service
 from app.services.redemption_service import RedemptionError
 
 router = APIRouter(prefix="/staff", tags=["staff"])
@@ -20,6 +22,14 @@ router = APIRouter(prefix="/staff", tags=["staff"])
 @router.get("/health")
 def staff_health(_: User = Depends(require_roles("staff", "admin"))):
     return {"status": "ok"}
+
+
+@router.get("/dashboard", response_model=StaffDashboardResponse)
+def get_staff_dashboard(
+    _: User = Depends(require_roles("staff", "admin")),
+    db: Session = Depends(get_db),
+) -> StaffDashboardResponse:
+    return StaffDashboardResponse.model_validate(dashboard_service.get_staff_dashboard(db))
 
 
 @router.post("/redemptions/verify", response_model=StaffRedemptionVerifyResponse)

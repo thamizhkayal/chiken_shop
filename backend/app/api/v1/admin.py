@@ -11,7 +11,9 @@ from app.schemas.activities import (
     PuzzleResponse,
     SpinRewardOptionResponse,
 )
+from app.schemas.dashboard import AdminDashboardResponse
 from app.services import activity_service
+from app.services import dashboard_service
 from app.services.activity_service import ActivityError
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -20,6 +22,14 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 @router.get("/health")
 def admin_health(_: User = Depends(require_roles("admin"))):
     return {"status": "ok"}
+
+
+@router.get("/dashboard", response_model=AdminDashboardResponse)
+def get_admin_dashboard(
+    _: User = Depends(require_roles("admin")),
+    db: Session = Depends(get_db),
+) -> AdminDashboardResponse:
+    return AdminDashboardResponse.model_validate(dashboard_service.get_admin_dashboard(db))
 
 
 @router.get("/activities/configuration", response_model=ActivityConfigurationResponse)

@@ -108,7 +108,10 @@ export default function AdminActivitiesPage() {
     <main className="activity-page">
       <header className="site-header dashboard-header">
         <Link className="brand" href="/"><span className="brand-mark">C</span><span>cluck club</span></Link>
-        <Link className="button button-quiet" href="/dashboard">Customer wallet</Link>
+        <nav className="operations-nav" aria-label="Admin navigation">
+          <Link className="button button-quiet" href="/admin">Dashboard</Link>
+          <Link className="button button-quiet" href="/staff/redemptions">Staff scanner</Link>
+        </nav>
       </header>
       <section className="activity-card admin-activity-card">
         <p className="section-kicker">SHOP MANAGEMENT</p>
